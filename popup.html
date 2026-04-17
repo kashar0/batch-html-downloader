@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Batch HTML Downloader</title>
+  <style>
+    body { font-family: sans-serif; padding: 10px; width: 350px; }
+    input, button { width: 100%; margin-top: 8px; padding: 6px; box-sizing: border-box; }
+    table { width: 100%; margin-top: 10px; font-size: 12px; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+    #downloads { max-height: 250px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h3>Start URL</h3>
+  <input type="text" id="urlInput" placeholder="https://website.com/TS/1000001.html">
+  <input type="text" id="subfolder" placeholder="Optional Subfolder in Downloads">
+  <button id="startBtn">Start Download</button>
+  <button id="pauseBtn" disabled>Pause</button>
+  <button id="stopBtn" disabled>Stop</button>
+
+  <div id="status"></div>
+  <div id="downloads">
+    <table id="table">
+      <thead><tr><th>File</th><th>Status</th></tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
