@@ -1,1 +1,17 @@
-{ "manifest_version": 3, "name": "Batch HTML Downloader", "version": "1.1", "description": "Download .html files in batches by incrementing numbers. Shows live progress.", "permissions": ["downloads"], "action": { "default_popup": "popup.html" }, "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none';" } }
+{
+  "manifest_version": 3,
+  "name": "Batch HTML Downloader Pro",
+  "version": "2.0",
+  "description": "Download numbered HTML files in batches with live progress, history, speed stats, and smart retry.",
+  "permissions": ["downloads", "storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Batch HTML Downloader Pro"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none';"
+  }
+}
