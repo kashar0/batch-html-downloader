@@ -1,31 +1,646 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Batch HTML Downloader</title>
+  <meta charset="UTF-8" />
+  <title>Batch HTML Downloader Pro</title>
   <style>
-    body { font-family: sans-serif; padding: 10px; width: 350px; }
-    input, button { width: 100%; margin-top: 8px; padding: 6px; box-sizing: border-box; }
-    table { width: 100%; margin-top: 10px; font-size: 12px; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
-    #downloads { max-height: 250px; overflow-y: auto; }
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap');
+
+    :root {
+      --bg:        #0d0f17;
+      --surface:   #141620;
+      --surface2:  #1c1f2e;
+      --border:    rgba(255,255,255,0.07);
+      --accent:    #4ade80;
+      --accent2:   #22d3ee;
+      --warn:      #f59e0b;
+      --danger:    #f87171;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --radius:    10px;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'Syne', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      width: 420px;
+      min-height: 520px;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .title {
+      font-size: 14px; font-weight: 800;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.01em;
+    }
+    .badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 20px;
+      color: var(--muted);
+    }
+    .header-right { display: flex; gap: 6px; }
+    .icon-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      width: 28px; height: 28px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted);
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      padding: 8px 16px 0;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 14px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:hover:not(.active) { color: var(--text); }
+
+    /* ── Panels ── */
+    .panel { display: none; padding: 14px 16px; }
+    .panel.active { display: block; }
+
+    /* ── Form ── */
+    .field { margin-bottom: 10px; }
+    .field label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .field input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 9px 12px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .field input::placeholder { color: var(--muted); }
+    .field input.error { border-color: var(--danger); }
+
+    .row { display: flex; gap: 8px; }
+    .row .field { flex: 1; }
+
+    /* ── Batch & concurrency settings ── */
+    .settings-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .settings-row .field { margin-bottom: 0; }
+
+    /* ── Action Buttons ── */
+    .actions { display: flex; gap: 8px; margin-top: 12px; }
+    .btn {
+      flex: 1;
+      padding: 9px 0;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.03em;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0d0f17;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #86efac;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--warn); color: var(--warn); }
+    .btn-danger { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+    .btn-danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 12px;
+    }
+    .stat {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      text-align: center;
+    }
+    .stat-val {
+      font-family: var(--mono);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .stat-val.green { color: var(--accent); }
+    .stat-val.red { color: var(--danger); }
+    .stat-val.cyan { color: var(--accent2); }
+    .stat-val.yellow { color: var(--warn); }
+    .stat-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      margin-top: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+    }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .progress-label { font-size: 11px; font-weight: 700; color: var(--muted); }
+    .progress-pct {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+    }
+    .progress-track {
+      height: 4px;
+      background: var(--surface);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 99px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    .progress-sub {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--muted);
+    }
+
+    /* ── Live log ── */
+    .log-wrap {
+      margin-top: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .log-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .log-clear {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .log-clear:hover { color: var(--danger); }
+    .log-body {
+      max-height: 160px;
+      overflow-y: auto;
+      padding: 6px 0;
+    }
+    .log-body::-webkit-scrollbar { width: 4px; }
+    .log-body::-webkit-scrollbar-track { background: transparent; }
+    .log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+    .log-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 3px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      transition: background 0.1s;
+    }
+    .log-row:hover { background: rgba(255,255,255,0.03); }
+    .log-num { color: var(--muted); min-width: 70px; }
+    .log-status {
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .log-status.done { background: rgba(74,222,128,0.12); color: var(--accent); }
+    .log-status.fail { background: rgba(248,113,113,0.12); color: var(--danger); }
+    .log-status.queued { background: rgba(100,116,139,0.15); color: var(--muted); }
+    .log-status.retry { background: rgba(245,158,11,0.12); color: var(--warn); }
+
+    /* ── History tab ── */
+    .history-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .history-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .history-item:hover { border-color: var(--accent); }
+    .history-item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .history-url {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text);
+      word-break: break-all;
+    }
+    .history-meta {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 5px;
+      display: flex;
+      gap: 12px;
+    }
+    .history-ok { color: var(--accent); font-weight: 600; }
+    .history-fail { color: var(--danger); font-weight: 600; }
+    .history-del {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .history-del:hover { color: var(--danger); }
+
+    /* ── Settings tab ── */
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 8px;
+      margin-top: 14px;
+    }
+    .section-title:first-child { margin-top: 0; }
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 6px;
+    }
+    .toggle-label { font-size: 12px; color: var(--text); }
+    .toggle-desc { font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .toggle {
+      width: 34px; height: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 12px; height: 12px;
+      background: var(--muted);
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    .toggle.on { background: rgba(74,222,128,0.2); border-color: var(--accent); }
+    .toggle.on::after { left: 18px; background: var(--accent); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 14px; left: 50%;
+      transform: translateX(-50%) translateY(50px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: var(--accent); color: var(--accent); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+    .toast.info { border-color: var(--accent2); color: var(--accent2); }
+
+    /* ── Status pill ── */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    .status-pill .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .status-pill.running .dot { background: var(--accent); animation: pulse 1s infinite; }
+    .status-pill.paused .dot { background: var(--warn); }
+    .status-pill.done .dot { background: var(--accent); }
+    .status-pill.error .dot { background: var(--danger); }
+    .status-pill.running { border-color: rgba(74,222,128,0.3); color: var(--accent); }
+    .status-pill.paused { border-color: rgba(245,158,11,0.3); color: var(--warn); }
+    .status-pill.error { border-color: rgba(248,113,113,0.3); color: var(--danger); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── ETA / Speed ── */
+    .meta-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .meta-chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .meta-chip span { color: var(--accent2); }
+
+    /* scrollbars globally */
+    * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
   </style>
 </head>
 <body>
-  <h3>Start URL</h3>
-  <input type="text" id="urlInput" placeholder="https://website.com/TS/1000001.html">
-  <input type="text" id="subfolder" placeholder="Optional Subfolder in Downloads">
-  <button id="startBtn">Start Download</button>
-  <button id="pauseBtn" disabled>Pause</button>
-  <button id="stopBtn" disabled>Stop</button>
 
-  <div id="status"></div>
-  <div id="downloads">
-    <table id="table">
-      <thead><tr><th>File</th><th>Status</th></tr></thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+<div class="header">
+  <div class="header-left">
+    <div class="logo">⬇</div>
+    <div>
+      <div class="title">Batch Downloader</div>
+    </div>
+    <div class="badge">PRO v2.0</div>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" id="histBtn" title="History">📋</button>
+    <button class="icon-btn" id="settBtn" title="Settings">⚙</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="download">Download</button>
+  <button class="tab" data-tab="progress">Progress</button>
+  <button class="tab" data-tab="history">History</button>
+  <button class="tab" data-tab="settings">Settings</button>
+</div>
+
+<!-- ═══ DOWNLOAD TAB ═══ -->
+<div class="panel active" id="tab-download">
+  <div class="field">
+    <label>Start URL (must end with number.html)</label>
+    <input type="text" id="urlInput" placeholder="https://site.com/docs/1000001.html" />
   </div>
 
-  <script src="popup.js"></script>
+  <div class="row">
+    <div class="field">
+      <label>Subfolder (optional)</label>
+      <input type="text" id="subfolder" placeholder="my-download" />
+    </div>
+    <div class="field">
+      <label>File Extension</label>
+      <input type="text" id="fileExt" value=".html" placeholder=".html" />
+    </div>
+  </div>
+
+  <div class="settings-row">
+    <div class="field">
+      <label>Batch Size</label>
+      <input type="number" id="batchSize" value="10" min="1" max="50" />
+    </div>
+    <div class="field">
+      <label>Max Failures</label>
+      <input type="number" id="maxFail" value="50" min="5" max="500" />
+    </div>
+    <div class="field">
+      <label>Delay (ms)</label>
+      <input type="number" id="delay" value="200" min="0" max="5000" />
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="startBtn">▶ Start</button>
+    <button class="btn btn-secondary" id="pauseBtn" disabled>⏸ Pause</button>
+    <button class="btn btn-danger" id="stopBtn" disabled>■ Stop</button>
+  </div>
+
+  <div id="statusPill" class="status-pill">
+    <div class="dot"></div>
+    <span id="statusText">Idle — enter a URL to begin</span>
+  </div>
+</div>
+
+<!-- ═══ PROGRESS TAB ═══ -->
+<div class="panel" id="tab-progress">
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-val green" id="statDone">0</div>
+      <div class="stat-label">Done</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val red" id="statFail">0</div>
+      <div class="stat-label">Failed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val cyan" id="statSpeed">—</div>
+      <div class="stat-label">Files/min</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val yellow" id="statStreak">0</div>
+      <div class="stat-label">Fail Streak</div>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-header">
+      <span class="progress-label">Streak Progress</span>
+      <span class="progress-pct" id="streakPct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-sub">
+      <span id="progCurrent">File: —</span>
+      <span id="progEta">ETA: —</span>
+    </div>
+  </div>
+
+  <div class="meta-row">
+    <div class="meta-chip">Elapsed: <span id="metaElapsed">—</span></div>
+    <div class="meta-chip">Current #: <span id="metaCurrent">—</span></div>
+    <div class="meta-chip">Session: <span id="metaSession">—</span></div>
+  </div>
+
+  <div class="log-wrap">
+    <div class="log-header">
+      <span class="log-title">Live Log</span>
+      <button class="log-clear" id="clearLog">Clear</button>
+    </div>
+    <div class="log-body" id="logBody"></div>
+  </div>
+</div>
+
+<!-- ═══ HISTORY TAB ═══ -->
+<div class="panel" id="tab-history">
+  <div id="historyList"></div>
+</div>
+
+<!-- ═══ SETTINGS TAB ═══ -->
+<div class="panel" id="tab-settings">
+  <div class="section-title">Behavior</div>
+
+  <div class="toggle-row">
+    <div>
+      <div class="toggle-label">Auto-switch to Progress tab</div>
+      <div class="toggle-desc">Jumps to Progress view when download starts</div>
+    </div>
+    <div class="toggle on" id="togAutoSwitch"></div>
+  </div>
+
+  <div class="toggle-row">
+    <div>
+      <div class="toggle-label">Save to History</div>
+      <div class="toggle-desc">Log completed sessions to History tab</div>
+    </div>
+    <div class="toggle on" id="togHistory"></div>
+  </div>
+
+  <div class="toggle-row">
+    <div>
+      <div class="toggle-label">Smart Stop on 404 streak</div>
+      <div class="toggle-desc">Stop when max consecutive failures is reached</div>
+    </div>
+    <div class="toggle on" id="togSmartStop"></div>
+  </div>
+
+  <div class="section-title">About</div>
+  <div class="toggle-row" style="cursor:default;">
+    <div>
+      <div class="toggle-label">Batch HTML Downloader Pro</div>
+      <div class="toggle-desc">v2.0 — MV3 Compliant</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="popup.js"></script>
 </body>
 </html>
